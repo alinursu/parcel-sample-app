@@ -1,0 +1,11 @@
+<div th:fragment="header">
+  <div th:if="${loggedIn == false}">
+    <a href="/user/login">LOGIN</a>
+    <a href="/user/register">REGISTER</a>
+  </div>
+
+  <div th:if="${loggedIn == true}">
+    <p th:text="${fullName}">full name</p>
+    <a href="/user/logoutUser">LOGOUT</a>
+  </div>
+</div>

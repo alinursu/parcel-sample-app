@@ -1,0 +1,46 @@
+# Server port
+server:
+  port: 8080
+
+spring:
+  # Application name
+  application:
+    name: landing-app
+  # Spring data source definition
+  datasource:
+    driverClassName: org.h2.Driver
+    url: "jdbc:h2:mem:testdb"
+    username: "sa"
+    password: "password"
+    testOnBorrow: true
+    testWhileIdle: true
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    validationQuery: SELECT 1
+    max-active: 15
+    max-idle: 10
+    max-wait: 8000
+  # Spring-Flyway configuration
+  flyway:
+    locations: db/migration/h2
+  # The below property has been added to support other HTTP verbs than GET and POST in Thymeleaf's forms (using th:method="")
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
+# Flyway configuration
+flyway:
+  url: jdbc:h2:mem:testdb
+  schemas: USERSERVICE
+  user: "sa"
+  password: "password"
+
+# CORS configuration
+web:
+  cors:
+    allowed-origins: "http://localhost:4200"
+    allowed-methods: GET, POST, PATCH, PUT, DELETE
+    max-age: 3600
+    allowed-headers: "Requestor-Type"
+    exposed-headers: "X-Get-Header"
