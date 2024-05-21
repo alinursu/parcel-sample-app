@@ -8,10 +8,10 @@ spring:
     name: landing-app
   # Spring data source definition
   datasource:
-    driverClassName: org.h2.Driver
-    url: "jdbc:h2:mem:testdb"
-    username: "sa"
-    password: "password"
+    driverClassName: org.postgresql.Driver
+    url: "jdbc:postgresql://localhost:5432/parcelapp-db"
+    username: "parcelapp-user"
+    password: "parcelapp-pass"
     testOnBorrow: true
     testWhileIdle: true
     timeBetweenEvictionRunsMillis: 60000
@@ -22,7 +22,7 @@ spring:
     max-wait: 8000
   # Spring-Flyway configuration
   flyway:
-    locations: db/migration/h2
+    locations: db/migration/postgresql
   # The below property has been added to support other HTTP verbs than GET and POST in Thymeleaf's forms (using th:method="")
   mvc:
     hiddenmethod:
@@ -31,16 +31,7 @@ spring:
 
 # Flyway configuration
 flyway:
-  url: jdbc:h2:mem:testdb
+  url: jdbc:postgresql://localhost:3306/parcelapp-db
   schemas: USERSERVICE
-  user: "sa"
-  password: "password"
-
-# CORS configuration
-web:
-  cors:
-    allowed-origins: "http://localhost:4200"
-    allowed-methods: GET, POST, PATCH, PUT, DELETE
-    max-age: 3600
-    allowed-headers: "Requestor-Type"
-    exposed-headers: "X-Get-Header"
+  user: "parcelapp-user"
+  password: "parcelapp-pass"
