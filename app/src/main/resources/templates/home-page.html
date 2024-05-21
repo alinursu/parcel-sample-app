@@ -1,14 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <div th:replace="common/header::header"></div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Parcel Delivery App</title>
+        <link href="../static/css/common/common.css" th:href="@{/css/common/common.css}" rel="stylesheet" />
+        <link href="../static/css/home-page.css" th:href="@{/css/home-page.css}" rel="stylesheet" />
+    </head>
+    <body>
+        <header th:replace="common/header::header"></header>
 
-    <p>Home page</p>
+        <div class="hero">
+            <div class="container">
+                <h1>Fast and Reliable Parcel Delivery</h1>
+                <p>Delivering your parcels with speed and care</p>
+            </div>
+        </div>
 
-    <div th:replace="common/footer::footer"></div>
-</body>
+        <div id="services" class="services">
+            <div class="container">
+                <h2>Our Services</h2>
+                <div class="service-item">
+                    <h3>Express Delivery</h3>
+                    <p>Get your parcels delivered within hours with our express delivery service.</p>
+                </div>
+                <div class="service-item">
+                    <h3>Standard Delivery</h3>
+                    <p>Reliable and affordable delivery for your everyday needs.</p>
+                </div>
+                <div class="service-item">
+                    <h3>International Shipping</h3>
+                    <p>Send parcels across the globe with our trusted international partners.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="testimonials" class="testimonials">
+            <div class="container">
+                <h2>What Our Customers Say</h2>
+                <div class="testimonial-item">
+                    <p>"Amazing service! My parcel arrived on time and in perfect condition."</p>
+                    <p><strong>- Jane Doe</strong></p>
+                </div>
+                <div class="testimonial-item">
+                    <p>"I love the express delivery option. It's a lifesaver for last-minute needs."</p>
+                    <p><strong>- John Smith</strong></p>
+                </div>
+                <div class="testimonial-item">
+                    <p>"Reliable and affordable. I'll definitely use this service again."</p>
+                    <p><strong>- Mary Johnson</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <footer th:replace="common/footer::footer"></footer>
+    </body>
 </html>

@@ -1,10 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AWB - Parcel Delivery App</title>
+        <link href="../static/css/common/common.css" th:href="@{/css/common/common.css}" rel="stylesheet" />
+        <link href="../static/css/awb/awb-page.css" th:href="@{/css/awb/awb-page.css}" rel="stylesheet" />
+    </head>
+    <body>
+        <header th:replace="common/header::header"></header>
 
-</body>
+        <div class="container" id="awb-container-wrapper">
+            <div class="awb-container">
+                <h2>AWB Details</h2>
+                <div class="awb-info">
+                    <p><strong>AWB Number:</strong> <span th:text="${awb.uniqueNumber}">mock</span></p>
+                    <p><strong>Shipping Address:</strong> <span th:text="${awb.shipmentAddress}">mock</span></p>
+                    <p><strong>Delivery Address:</strong> <span th:text="${awb.deliveryAddress}">mock</span></p>
+                    <p><strong>Price:</strong> <span th:text="${awb.price}">mock</span></p>
+                    <form th:if="${awb.status == T(ro.uaic.info.parcelexampleapp.domain.AwbStatus).AWAITING_PAYMENT}" method="POST" action="#" th:action="@{/payment/{uniqueNumber}(uniqueNumber=${awb.uniqueNumber})}">
+                        <input type="submit" value="Pay">
+                    </form>
+                    <p><strong>Initiated on:</strong> <span th:text="${#dates.format(awb.creationDate, 'dd-MM-yyyy')}">mock</span></p>
+                </div>
+                <div class="status">
+                    <p><strong>Current Status:</strong> <span th:text="${awb.status}">mock</span></p>
+                    <p><strong>Last Updated:</strong> <span th:text="${#dates.format(awb.lastUpdateDate, 'dd-MM-yyyy')}">mock</span></p>
+                </div>
+            </div>
+        </div>
+
+        <footer th:replace="common/footer::footer"></footer>
+    </body>
 </html>

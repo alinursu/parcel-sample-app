@@ -1,5 +1,6 @@
 package ro.uaic.info.parcelexampleapp.controller;
 
+import org.springframework.ui.Model;
 import ro.uaic.info.parcelexampleapp.api.AdminApi;
 import ro.uaic.info.parcelexampleapp.domain.Awb;
 import ro.uaic.info.parcelexampleapp.domain.DeliveryRoute;
@@ -19,16 +20,16 @@ public class AdminController implements AdminApi {
     private DeliveryService deliveryService;
 
     @Override
-    public String allAwbsAdminPage() {
+    public String allAwbsAdminPage(Model model) {
         List<Awb> awbs = awbService.getAllAwbsNotDelivered();
-        // TODO: add to model
+        model.addAttribute("awbList", awbs);
         return "admin/all-awbs-page";
     }
 
     @Override
-    public String allDeliveryRoutesPage() {
+    public String allDeliveryRoutesPage(Model model) {
         List<DeliveryRoute> deliveryRoutes = deliveryService.getAllDeliveryRoutesForToday();
-        // TODO: add to model
+        model.addAttribute("routesList", deliveryRoutes);
         return "admin/all-routes-page";
     }
 }

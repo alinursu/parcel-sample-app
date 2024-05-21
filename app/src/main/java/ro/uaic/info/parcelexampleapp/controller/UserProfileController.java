@@ -1,10 +1,13 @@
 package ro.uaic.info.parcelexampleapp.controller;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.Model;
 import ro.uaic.info.parcelexampleapp.api.UserProfileApi;
 import ro.uaic.info.parcelexampleapp.domain.User;
 import ro.uaic.info.parcelexampleapp.domain.exception.InternalServerErrorException;
 import ro.uaic.info.parcelexampleapp.domain.exception.InvalidJwtCookieException;
 import ro.uaic.info.parcelexampleapp.domain.exception.MissingJwtCookieException;
+import ro.uaic.info.parcelexampleapp.security.AuthenticatedUser;
 import ro.uaic.info.parcelexampleapp.security.jwt.JwtTokenUtils;
 import ro.uaic.info.parcelexampleapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +21,18 @@ public class UserProfileController implements UserProfileApi {
     private UserService userService;
 
     @Override
-    public String userProfilePage(HttpServletRequest request) throws InvalidJwtCookieException, MissingJwtCookieException, InternalServerErrorException {
-        String userEmail = new JwtTokenUtils().getEmailFromJwtCookie(request);
+    public String userProfilePage(Model model, HttpServletRequest request) throws InternalServerErrorException {
+        String userEmail = ((AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+                .getUsername();
 
         User user = userService.getUserByEmail(userEmail);
         if (user == null) {
             throw new InternalServerErrorException();
         }
 
-        // TODO: add user to model
+        model.addAttribute("emailAddress", userEmail);
+        model.addAttribute("fullName", user.getFirstName() + " " + user.getLastName());
+
         return "user/user-profile-page";
     }
 }

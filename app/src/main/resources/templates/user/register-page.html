@@ -1,16 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Login</title>
-</head>
-<body>
-<form method="POST" action="#" th:action="@{/register}" th:object="${registerRequest}">
-  <p>Email: <input type="text" th:field="*{email}"/></p>
-  <p>Password: <input type="text" th:field="*{password}"></p>
-  <p>First Name: <input type="text" th:field="*{firstName}"></p>
-  <p>Last Name: <input type="text" th:field="*{lastName}"></p>
-  <p><input type="submit" value="Submit"/></p>
-</form>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Parcel Delivery App</title>
+    <link href="../static/css/common/common.css" th:href="@{/css/common/common.css}" rel="stylesheet" />
+    <link href="../static/css/user/register-page.css" th:href="@{/css/user/register-page.css}" rel="stylesheet" />
+  </head>
+  <body>
+    <header th:replace="common/header::header"></header>
+
+    <div class="container" id="register-container-wrapper">
+      <div class="register-container">
+        <h2>Register</h2>
+        <p class="error-message" th:text="${errorMessage}">mock</p>
+        <form method="POST" action="#" th:action="@{/user/register}" th:object="${registerRequestDto}">
+          <input type="text" name="firstname" th:field="*{firstName}" placeholder="First name" required>
+          <input type="text" name="lastname" th:field="*{lastName}" placeholder="Last name" required>
+          <input type="email" name="email" th:field="*{email}" placeholder="Email" required>
+          <input type="password" name="password" th:field="*{password}" placeholder="Password" required>
+          <input type="submit" value="Register">
+        </form>
+        <p>Already have an account? <a href="/user/login">Login here</a></p>
+      </div>
+    </div>
+
+    <footer th:replace="common/footer::footer"></footer>
+  </body>
 </html>

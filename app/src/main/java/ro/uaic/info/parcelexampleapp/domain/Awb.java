@@ -33,6 +33,7 @@ public class Awb {
     @Column(name = "last_updated_at")
     private Date lastUpdateDate;
 
+    @Enumerated(EnumType.STRING)
     private AwbStatus status;
 
     private Double price;

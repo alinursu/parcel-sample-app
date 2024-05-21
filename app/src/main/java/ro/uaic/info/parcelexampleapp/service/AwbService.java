@@ -6,6 +6,7 @@ import ro.uaic.info.parcelexampleapp.domain.User;
 import ro.uaic.info.parcelexampleapp.domain.dto.CreateAwbDto;
 import ro.uaic.info.parcelexampleapp.domain.dto.DtoValidator;
 import ro.uaic.info.parcelexampleapp.domain.exception.AwbDoesNotExistException;
+import ro.uaic.info.parcelexampleapp.domain.exception.InvalidAwbDtoException;
 import ro.uaic.info.parcelexampleapp.domain.exception.InvalidDtoException;
 import ro.uaic.info.parcelexampleapp.repository.AwbRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,8 @@ public class AwbService {
                 .collect(Collectors.toList());
     }
 
-    public Awb addAwb(CreateAwbDto dto, User user) throws InvalidDtoException {
-        if (!DtoValidator.isValid(dto)) {
-            throw new InvalidDtoException("add awb");
-        }
+    public Awb addAwb(CreateAwbDto dto, User user) throws InvalidAwbDtoException {
+        DtoValidator.isValid(dto);
 
         Awb awb = Awb.builder()
                 .uniqueNumber(generateUniqueNumber())
@@ -50,6 +49,7 @@ public class AwbService {
                 .lastUpdateDate(new Date())
                 .status(AwbStatus.AWAITING_PAYMENT)
                 .owner(user)
+                .price(100D)
                 .build();
 
         awb = awbRepository.save(awb);

@@ -1,0 +1,28 @@
+.hero {
+    text-align: center;
+    padding: 2em 0;
+    color: white;
+}
+.hero h1 {
+    font-size: 3em;
+    margin-bottom: 0.5em;
+    color: black;
+}
+.hero p {
+    font-size: 1.2em;
+    color: gray;
+}
+.services, .testimonials {
+    padding: 2em 0;
+    text-align: center;
+}
+.service-item, .testimonial-item {
+    background-color: white;
+    margin: 1em;
+    padding: 1em;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    width: calc(33% - 2em);
+    box-sizing: border-box;
+}

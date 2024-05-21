@@ -2,10 +2,7 @@ package ro.uaic.info.parcelexampleapp.api;
 
 import ro.uaic.info.parcelexampleapp.domain.DeliveryRoute;
 import ro.uaic.info.parcelexampleapp.domain.dto.UpdateAwbStatusDto;
-import ro.uaic.info.parcelexampleapp.domain.exception.AwbDoesNotExistException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidDtoException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidJwtCookieException;
-import ro.uaic.info.parcelexampleapp.domain.exception.MissingJwtCookieException;
+import ro.uaic.info.parcelexampleapp.domain.exception.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,5 +14,5 @@ public interface DeliveryApi {
     ResponseEntity<DeliveryRoute> getTodayRoute(HttpServletRequest request) throws InvalidJwtCookieException, MissingJwtCookieException;
 
     @PutMapping("/awb/{awbNumber}")
-    ResponseEntity<String> updateAwbStatus(@PathVariable String awbNumber, @RequestBody UpdateAwbStatusDto dto) throws AwbDoesNotExistException, InvalidDtoException;
+    ResponseEntity<String> updateAwbStatus(@PathVariable String awbNumber, @RequestBody UpdateAwbStatusDto dto) throws AwbDoesNotExistException, InvalidUpdateAwbDtoException;
 }

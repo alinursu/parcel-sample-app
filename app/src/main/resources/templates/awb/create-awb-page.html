@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create AWB - Parcel Delivery App</title>
+        <link href="../static/css/common/common.css" th:href="@{/css/common/common.css}" rel="stylesheet" />
+        <link href="../static/css/awb/create-awb-page.css" th:href="@{/css/awb/create-awb-page.css}" rel="stylesheet" />
+    </head>
+    <body>
+        <header th:replace="common/header::header"></header>
+
+        <div class="container" id="awb-create-container-wrapper">
+            <div class="awb-create-container">
+                <h2>Create AWB</h2>
+                <form method="POST" action="#" th:action="@{/awb/add}" th:object="${createAwbRequestDto}">
+                    <input type="text" name="shipment_address" th:field="*{shipmentAddress}" placeholder="Shipment Address" required>
+                    <input type="text" name="delivery_address" th:field="*{deliveryAddress}"  placeholder="Delivery Address" required>
+                    <input type="submit" value="Generate AWB">
+                </form>
+            </div>
+        </div>
+
+        <footer th:replace="common/footer::footer"></footer>
+    </body>
+</html>

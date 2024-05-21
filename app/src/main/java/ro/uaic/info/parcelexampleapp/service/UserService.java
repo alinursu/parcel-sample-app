@@ -4,9 +4,7 @@ import ro.uaic.info.parcelexampleapp.domain.User;
 import ro.uaic.info.parcelexampleapp.domain.dto.DtoValidator;
 import ro.uaic.info.parcelexampleapp.domain.dto.UserLoginDto;
 import ro.uaic.info.parcelexampleapp.domain.dto.UserRegisterDto;
-import ro.uaic.info.parcelexampleapp.domain.exception.EmailAlreadyInUseException;
-import ro.uaic.info.parcelexampleapp.domain.exception.IncorrectCredentialsException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidDtoException;
+import ro.uaic.info.parcelexampleapp.domain.exception.*;
 import ro.uaic.info.parcelexampleapp.repository.UserRepository;
 import ro.uaic.info.parcelexampleapp.security.jwt.JwtTokenContent;
 import ro.uaic.info.parcelexampleapp.security.jwt.JwtTokenUtils;
@@ -18,10 +16,8 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public boolean registerUser(UserRegisterDto dto) throws InvalidDtoException, EmailAlreadyInUseException {
-        if (!DtoValidator.isValid(dto)) {
-            throw new InvalidDtoException("register user");
-        }
+    public boolean registerUser(UserRegisterDto dto) throws EmailAlreadyInUseException, InvalidEmailAddressOnRegisterException, InvalidRegisterDtoException {
+        DtoValidator.isValid(dto);
 
         if (userRepository.findByEmail(dto.getEmail()) != null) {
             throw new EmailAlreadyInUseException(dto.getEmail());
@@ -38,10 +34,8 @@ public class UserService {
         return true;
     }
 
-    public String loginUser(UserLoginDto dto) throws InvalidDtoException, IncorrectCredentialsException {
-        if (!DtoValidator.isValid(dto)) {
-            throw new InvalidDtoException("login user");
-        }
+    public String loginUser(UserLoginDto dto) throws IncorrectCredentialsException, InvalidLoginDtoException, InvalidEmailAddressOnLoginException {
+        DtoValidator.isValid(dto);
 
         User entity = userRepository.findByEmail(dto.getEmail());
 

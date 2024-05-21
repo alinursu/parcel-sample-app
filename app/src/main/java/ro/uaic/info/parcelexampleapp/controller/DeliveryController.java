@@ -6,10 +6,7 @@ import ro.uaic.info.parcelexampleapp.domain.DeliveryRoute;
 import ro.uaic.info.parcelexampleapp.domain.User;
 import ro.uaic.info.parcelexampleapp.domain.dto.DtoValidator;
 import ro.uaic.info.parcelexampleapp.domain.dto.UpdateAwbStatusDto;
-import ro.uaic.info.parcelexampleapp.domain.exception.AwbDoesNotExistException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidDtoException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidJwtCookieException;
-import ro.uaic.info.parcelexampleapp.domain.exception.MissingJwtCookieException;
+import ro.uaic.info.parcelexampleapp.domain.exception.*;
 import ro.uaic.info.parcelexampleapp.security.jwt.JwtTokenUtils;
 import ro.uaic.info.parcelexampleapp.service.AwbService;
 import ro.uaic.info.parcelexampleapp.service.DeliveryService;
@@ -41,10 +38,8 @@ public class DeliveryController implements DeliveryApi {
     }
 
     @Override
-    public ResponseEntity<String> updateAwbStatus(String awbNumber, UpdateAwbStatusDto dto) throws AwbDoesNotExistException, InvalidDtoException {
-        if (!DtoValidator.isValid(dto)) {
-            throw new InvalidDtoException("update awb status");
-        }
+    public ResponseEntity<String> updateAwbStatus(String awbNumber, UpdateAwbStatusDto dto) throws AwbDoesNotExistException, InvalidUpdateAwbDtoException {
+        DtoValidator.isValid(dto);
 
         Awb awb = awbService.getAwbByNumber(awbNumber);
         awb.setStatus(dto.getNewStatus());

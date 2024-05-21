@@ -1,10 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Delivery Routes - Parcel Delivery App</title>
+        <link href="../static/css/common/common.css" th:href="@{/css/common/common.css}" rel="stylesheet" />
+        <link href="../static/css/admin/all-routes-page.css" th:href="@{/css/admin/all-routes-page.css}" rel="stylesheet" />
+    </head>
+    <body>
+        <header th:replace="common/header::header"></header>
 
-</body>
+        <div class="container" id="routes-list-container-wrapper">
+            <div class="routes-list-container">
+                <h2>Delivery Routes</h2>
+                <div class="route-item" th:each="route: ${routesList}">
+                    <h3>Route - <span th:text="${route.deliveryMan.firstName} + ' ' + ${route.deliveryMan.lastName}">mock</span></h3>
+                    <div class="awb-list">
+                        <p th:each="awb: ${route.awbs}"><strong>AWB Number:</strong> <span th:text="${awb.uniqueNumber}">mock</span> - <strong>Status:</strong> <span th:text="${awb.status}">mock</span> - <a href="#" th:href="@{/awb/{uniqueNumber}(uniqueNumber=${awb.uniqueNumber})}">View Details</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer th:replace="common/footer::footer"></footer>
+    </body>
 </html>

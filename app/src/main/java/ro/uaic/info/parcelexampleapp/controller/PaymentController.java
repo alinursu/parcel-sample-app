@@ -39,6 +39,6 @@ public class PaymentController implements PaymentApi {
         awb = paymentService.payAwb(awb);
         awbService.updateAwb(awb);
 
-        return "redirect/awb/" + awbNumber;
+        return "redirect:/awb/" + awbNumber;
     }
 }

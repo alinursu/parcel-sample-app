@@ -1,0 +1,46 @@
+#routes-list-container-wrapper {
+    max-width: 800px;
+    margin-bottom: 2em;
+}
+
+.routes-list-container {
+    margin-top: 5em;
+    padding: 2em;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.routes-list-container h2 {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.route-item {
+    padding: 1em;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin-bottom: 1em;
+}
+
+.route-item h3 {
+    margin: 0;
+}
+
+.awb-list {
+    margin: 1em 0;
+}
+
+.awb-list p {
+    margin: 0.5em 0;
+}
+
+.route-item a {
+    text-decoration: none;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.route-item a:hover {
+    text-decoration: underline;
+}

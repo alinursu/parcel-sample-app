@@ -6,6 +6,7 @@ import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "delivery_routes")
@@ -26,7 +27,9 @@ public class DeliveryRoute {
     @Column(name = "delivery_date")
     private Date date;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
+    @JoinTable(name = "awb_delivery_route_relation", joinColumns = @JoinColumn(name = "delivery_route_id"),
+            inverseJoinColumns = @JoinColumn(name = "awb_id"))
     private List<Awb> awbs;
 
     @Override

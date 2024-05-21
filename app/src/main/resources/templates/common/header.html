@@ -1,11 +1,15 @@
-<div th:fragment="header">
-  <div th:if="${loggedIn == false}">
-    <a href="/user/login">LOGIN</a>
-    <a href="/user/register">REGISTER</a>
+<header th:fragment="header">
+  <div class="container">
+    <h1>Parcel Delivery App</h1>
+    <nav>
+      <a href="/" class="header-menu-item">Home</a>
+      <a href="/#services" class="header-menu-item">Services</a>
+      <a href="/#testimonials" class="header-menu-item">Testimonials</a>
+      <a th:if="${loggedIn == false}" href="/user/login" class="header-menu-item">Sign in</a>
+      <a th:if="${loggedIn == true}" href="/user/profile" class="header-menu-item">My Profile</a>
+      <a th:if="${loggedIn == true}" href="/user/logout" class="header-menu-item">Sign out</a>
+      <a th:if="${isAdmin == true}" href="/admin/awb" class="header-menu-item">[Admin] AWBs</a>
+      <a th:if="${isAdmin == true}" href="/admin/routes" class="header-menu-item">[Admin] Routes</a>
+    </nav>
   </div>
-
-  <div th:if="${loggedIn == true}">
-    <p th:text="${fullName}">full name</p>
-    <a href="/user/logoutUser">LOGOUT</a>
-  </div>
-</div>
+</header>

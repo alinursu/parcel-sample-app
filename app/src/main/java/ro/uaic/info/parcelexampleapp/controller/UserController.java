@@ -1,11 +1,10 @@
 package ro.uaic.info.parcelexampleapp.controller;
 
+import org.springframework.ui.Model;
 import ro.uaic.info.parcelexampleapp.api.UserApi;
 import ro.uaic.info.parcelexampleapp.domain.dto.UserLoginDto;
 import ro.uaic.info.parcelexampleapp.domain.dto.UserRegisterDto;
-import ro.uaic.info.parcelexampleapp.domain.exception.EmailAlreadyInUseException;
-import ro.uaic.info.parcelexampleapp.domain.exception.IncorrectCredentialsException;
-import ro.uaic.info.parcelexampleapp.domain.exception.InvalidDtoException;
+import ro.uaic.info.parcelexampleapp.domain.exception.*;
 import ro.uaic.info.parcelexampleapp.security.jwt.JwtTokenUtils;
 import ro.uaic.info.parcelexampleapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,21 +19,24 @@ public class UserController implements UserApi {
     private UserService userService;
 
     @Override
-    public String loginPage() {
+    public String loginPage(Model model) {
+        model.addAttribute("loginRequestDto", new UserLoginDto());
         return "user/login-page";
     }
 
     @Override
-    public String registerPage() {
+    public String registerPage(Model model) {
+        model.addAttribute("registerRequestDto", new UserRegisterDto());
         return "user/register-page";
     }
 
     @Override
-    public String loginUser(UserLoginDto dto, HttpServletResponse response) throws IncorrectCredentialsException, InvalidDtoException {
+    public String loginUser(UserLoginDto dto, HttpServletResponse response) throws IncorrectCredentialsException, InvalidLoginDtoException, InvalidEmailAddressOnLoginException {
         String jwtToken = userService.loginUser(dto);
 
         Cookie cookie = new Cookie(JwtTokenUtils.getCookieName(), jwtToken);
         cookie.setMaxAge(3600);
+        cookie.setPath("/");
 
         response.addCookie(cookie);
 
@@ -42,9 +44,9 @@ public class UserController implements UserApi {
     }
 
     @Override
-    public String registerUser(UserRegisterDto dto) throws EmailAlreadyInUseException, InvalidDtoException {
+    public String registerUser(UserRegisterDto dto) throws EmailAlreadyInUseException, InvalidEmailAddressOnRegisterException, InvalidRegisterDtoException {
         userService.registerUser(dto);
-        return "redirect:/";
+        return "redirect:/user/login";
     }
 
     @Override

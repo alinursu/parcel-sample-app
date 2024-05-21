@@ -22,7 +22,7 @@ public class JwtTokenUtils {
     private Clock clock;
 
     private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
-    private static final String KEY = "1234567890123456789012345678901234567901234";
+    private static final String KEY = "12345678901234567890123456789012345679012345678901234567890";
     private static final String ISSUER = "app-name";
 
     private static final String COOKIE_NAME = "jwt";

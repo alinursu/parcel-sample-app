@@ -1,0 +1,33 @@
+#awb-container-wrapper {
+    max-width: 800px;
+    margin-bottom: 2em;
+}
+
+.awb-container {
+    margin-top: 5em;
+    padding: 2em;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.awb-container h2 {
+    margin-bottom: 1em;
+}
+
+.awb-info {
+    text-align: left;
+    margin-bottom: 2em;
+}
+
+.awb-info p {
+    margin: 0.5em 0;
+}
+
+.status {
+    padding: 1em;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin-top: 1em;
+}
