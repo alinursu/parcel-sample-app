@@ -1,0 +1,144 @@
+Resources:
+  ParcelAppCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ParcelAppCluster
+
+  DBMSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref DBMSTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: ["subnet-12345678"]
+          SecurityGroups: ["sg-12345678"]
+          AssignPublicIp: ENABLED
+
+  DBMSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "dbms-task"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: dbms-container
+          Image: <ECR_REPOSITORY_URI>/database_management_service_project:latest
+          PortMappings:
+            - ContainerPort: 8080
+            
+  UserService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref UserTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: ["subnet-12345678"]
+          SecurityGroups: ["sg-12345678"]
+          AssignPublicIp: ENABLED
+
+  UserTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "user-task"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: user-container
+          Image: <ECR_REPOSITORY_URI>/user_service_project:latest
+          PortMappings:
+            - ContainerPort: 8081
+  PaymentService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref PaymentTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: ["subnet-12345678"]
+          SecurityGroups: ["sg-12345678"]
+          AssignPublicIp: ENABLED
+
+  PaymentTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "payment-task"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: payment-container
+          Image: <ECR_REPOSITORY_URI>/payment_service_project:latest
+          PortMappings:
+            - ContainerPort: 8082
+         
+  DeliveryService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref DeliveryTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: ["subnet-12345678"]
+          SecurityGroups: ["sg-12345678"]
+          AssignPublicIp: ENABLED
+
+  DeliveryTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "delivery-task"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: delivery-container
+          Image: <ECR_REPOSITORY_URI>/delivery_service_project:latest
+          PortMappings:
+            - ContainerPort: 8083
+            
+  GatewayService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref GatewayTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: ["subnet-12345678"]
+          SecurityGroups: ["sg-12345678"]
+          AssignPublicIp: ENABLED
+
+  GatewayTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "gateway-task"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: gateway-container
+          Image: <ECR_REPOSITORY_URI>/gateway_app_project:latest
+          PortMappings:
+            - ContainerPort: 80

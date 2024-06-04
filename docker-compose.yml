@@ -1,0 +1,136 @@
+version: '3'
+
+volumes: 
+  postgres_vol: {}
+  dbm_service_vol: {}
+  user_service_vol: {}
+  payment_service_vol: {}
+  delivery_service_vol: {}
+  gateway_app_vol: {}
+
+networks:
+  parcel-net:
+    driver: bridge
+
+services:
+  postgres-db:
+    image: postgres:14.1-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: localpass
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_vol:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - parcel-net
+
+  dbm-service:
+    image: parcel-app/dbm-service-image
+    build: database-management-service/.
+    container_name: dbmservice
+    environment:
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_NAME: parcelappdb
+      DB_USER: admin
+      DB_PASS: localpass
+    networks:
+      - parcel-net
+    ports:
+      - "8080:8080"
+    volumes:
+      - dbm_service_vol:/tmp/app
+    depends_on:
+      - postgres-db
+  
+  user-service:
+    image: parcel-app/user-service-image
+    build: 
+      context: ./
+      dockerfile: ./user-service/Dockerfile
+    container_name: userservice
+    environment:
+      DBM_SERVICE_BASE_URL: http://dbm-service:8080
+    networks:
+      - parcel-net
+    ports:
+      - "8081:8081"
+    volumes:
+      - user_service_vol:/tmp/app
+    depends_on:
+      - dbm-service
+    links:
+      - dbm-service
+
+  payment-service:
+    image: parcel-app/payment-service-image
+    build: 
+      context: ./
+      dockerfile: ./payment-service/Dockerfile
+    container_name: paymentservice
+    environment:
+      DBM_SERVICE_BASE_URL: http://dbm-service:8080
+      USER_SERVICE_BASE_URL: http://user-service:8081
+    networks:
+      - parcel-net
+    ports:
+      - "8082:8082"
+    volumes:
+      - payment_service_vol:/tmp/app
+    depends_on:
+      - dbm-service
+      - user-service
+    links:
+      - dbm-service
+      - user-service
+  
+  delivery-service:
+    image: parcel-app/delivery-service-image
+    build: 
+      context: ./
+      dockerfile: ./delivery-service/Dockerfile
+    container_name: deliveryservice
+    environment:
+      DBM_SERVICE_BASE_URL: http://dbm-service:8080
+      USER_SERVICE_BASE_URL: http://user-service:8081
+    networks:
+      - parcel-net
+    ports:
+      - "8083:8083"
+    volumes:
+      - delivery_service_vol:/tmp/app
+    depends_on:
+      - dbm-service
+      - user-service
+    links:
+      - dbm-service
+      - user-service
+
+  gateway-app:
+    image: parcel-app/gateway-app-image
+    build: 
+      context: ./
+      dockerfile: ./gateway-app/Dockerfile
+    container_name: gatewayapp
+    environment:
+      USER_SERVICE_BASE_URL: http://user-service:8081
+      PAYMENT_SERVICE_BASE_URL: http://payment-service:8082
+      DELIVERY_SERVICE_BASE_URL: http://delivery-service:8083
+    networks:
+      - parcel-net
+    ports:
+      - "80:80"
+    volumes:
+      - gateway_app_vol:/tmp/app
+    depends_on:
+      - user-service
+      - payment-service
+      - delivery-service
+    links:
+      - user-service
+      - payment-service
+      - delivery-service

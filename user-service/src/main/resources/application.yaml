@@ -1,0 +1,11 @@
+# Server port
+server:
+  port: 8081
+
+spring:
+  # Application name
+  application:
+    name: user-service-app
+
+client:
+  dbmServiceBaseUrl: ${DBM_SERVICE_BASE_URL:http://localhost:8080}

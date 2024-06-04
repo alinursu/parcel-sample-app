@@ -1,0 +1,18 @@
+# Server port
+server:
+  port: 80
+
+spring:
+  # Application name
+  application:
+    name: gateway-app
+  # The below property has been added to support other HTTP verbs than GET and POST in Thymeleaf's forms (using th:method="")
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
+client:
+  userServiceBaseUrl: ${USER_SERVICE_BASE_URL:http://localhost:8081}
+  paymentServiceBaseUrl: ${PAYMENT_SERVICE_BASE_URL:http://localhost:8082}
+  deliveryServiceBaseUrl: ${DELIVERY_SERVICE_BASE_URL:http://localhost:8083}
