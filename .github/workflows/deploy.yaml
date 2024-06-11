@@ -1,0 +1,81 @@
+name: Build and Deploy to AWS ECR and ECS
+
+on:
+  push:
+    branches:
+      - microservices
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-central-1
+      ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}
+      ECR_REPOSITORY_DBMS: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/database_management_service_project
+      ECR_REPOSITORY_USER: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/user_service_project
+      ECR_REPOSITORY_PAYMENT: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/payment_service_project
+      ECR_REPOSITORY_DELIVERY: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/delivery_service_project
+      ECR_REPOSITORY_GATEWAY: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/gateway_app_project
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '22'
+        distribution: 'oracle'
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push Docker image for database management service
+      run: |
+        docker build -t database_management_service_project ./database-management-service
+        docker tag database_management_service_project:latest ${{ env.ECR_REPOSITORY_DBMS }}:latest
+        docker push ${{ env.ECR_REPOSITORY_DBMS }}:latest
+
+    - name: Build, tag, and push Docker image for user service
+      run: |
+        docker build -t user_service_project ./user-service
+        docker tag user_service_project:latest ${{ env.ECR_REPOSITORY_USER }}:latest
+        docker push ${{ env.ECR_REPOSITORY_USER }}:latest
+
+    - name: Build, tag, and push Docker image for payment service
+      run: |
+        docker build -t payment_service_project ./payment-service
+        docker tag payment_service_project:latest ${{ env.ECR_REPOSITORY_PAYMENT }}:latest
+        docker push ${{ env.ECR_REPOSITORY_PAYMENT }}:latest
+
+    - name: Build, tag, and push Docker image for delivery service
+      run: |
+        docker build -t delivery_service_project ./delivery-service
+        docker tag delivery_service_project:latest ${{ env.ECR_REPOSITORY_DELIVERY }}:latest
+        docker push ${{ env.ECR_REPOSITORY_DELIVERY }}:latest
+
+    - name: Build, tag, and push Docker image for gateway app
+      run: |
+        docker build -t gateway_app_project ./gateway-app
+        docker tag gateway_app_project:latest ${{ env.ECR_REPOSITORY_GATEWAY }}:latest
+        docker push ${{ env.ECR_REPOSITORY_GATEWAY }}:latest
+
+    - name: Deploy to ECS
+      run: |
+        aws cloudformation deploy \
+          --template-file ecs-fargate.yaml \
+          --stack-name parcelapp-stack \
+          --capabilities CAPABILITY_NAMED_IAM
+
+    - name: Clean up workspace
+      run: |
+        rm -rf *
