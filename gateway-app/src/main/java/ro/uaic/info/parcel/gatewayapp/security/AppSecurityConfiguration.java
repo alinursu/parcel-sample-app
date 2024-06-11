@@ -25,7 +25,6 @@ public class AppSecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         auth -> auth.requestMatchers(HttpMethod.GET, EndpointsConfiguration.GET_ADMIN_ONLY).hasAuthority("Admin")
                                 .requestMatchers(HttpMethod.GET, EndpointsConfiguration.GET_DELIVERY_ONLY).hasAuthority("Delivery")

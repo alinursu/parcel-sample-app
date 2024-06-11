@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.5</version>
+		<version>3.3.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -23,7 +23,7 @@
 		<xml.bind.version>2.3.1</xml.bind.version>
 		<springdoc.version>1.8.0</springdoc.version>
 		<feign.client.version>13.2.1</feign.client.version>
-		<spring.feign.version>4.1.1</spring.feign.version>
+		<spring.feign.version>4.1.2</spring.feign.version>
 		<dbmservice.version>1.0.0</dbmservice.version>
 	</properties>
 
@@ -134,6 +134,12 @@
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>4.0.0.4121</version>
 			</plugin>
 		</plugins>
 	</build>
