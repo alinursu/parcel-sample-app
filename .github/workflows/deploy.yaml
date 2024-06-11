@@ -47,25 +47,25 @@ jobs:
 
     - name: Build, tag, and push Docker image for user service
       run: |
-        docker build -t user_service_project ./user-service
+        docker build -t user_service_project -f ./user-service/Dockerfile .
         docker tag user_service_project:latest ${{ env.ECR_REPOSITORY_USER }}:latest
         docker push ${{ env.ECR_REPOSITORY_USER }}:latest
 
     - name: Build, tag, and push Docker image for payment service
       run: |
-        docker build -t payment_service_project ./payment-service
+        docker build -t payment_service_project -f ./payment-service/Dockerfile .
         docker tag payment_service_project:latest ${{ env.ECR_REPOSITORY_PAYMENT }}:latest
         docker push ${{ env.ECR_REPOSITORY_PAYMENT }}:latest
 
     - name: Build, tag, and push Docker image for delivery service
       run: |
-        docker build -t delivery_service_project ./delivery-service
+        docker build -t delivery_service_project -f ./delivery-service/Dockerfile .
         docker tag delivery_service_project:latest ${{ env.ECR_REPOSITORY_DELIVERY }}:latest
         docker push ${{ env.ECR_REPOSITORY_DELIVERY }}:latest
 
     - name: Build, tag, and push Docker image for gateway app
       run: |
-        docker build -t gateway_app_project ./gateway-app
+        docker build -t gateway_app_project -f ./gateway-app/Dockerfile .
         docker tag gateway_app_project:latest ${{ env.ECR_REPOSITORY_GATEWAY }}:latest
         docker push ${{ env.ECR_REPOSITORY_GATEWAY }}:latest
 

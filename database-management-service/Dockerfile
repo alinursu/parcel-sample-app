@@ -9,6 +9,6 @@ WORKDIR "/tmp/app_dbms"
 
 RUN mvn clean install
 
-COPY ./target/*.jar app.jar
+RUN cp ./target/*.jar app.jar
 
 ENTRYPOINT ["java","-jar","/tmp/app_dbms/app.jar"]
