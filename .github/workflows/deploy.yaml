@@ -74,6 +74,12 @@ jobs:
         aws cloudformation deploy \
           --template-file ecs-fargate.yaml \
           --stack-name parcelapp-stack \
+          --parameter-overrides \
+            DatabaseManagementServiceRepository=${{ env.ECR_REPOSITORY_DBMS }} \
+            UserServiceRepository=${{ env.ECR_REPOSITORY_USER }} \
+            PaymentServiceRepository=${{ env.ECR_REPOSITORY_PAYMENT }} \
+            DeliveryServiceRepository=${{ env.ECR_REPOSITORY_DELIVERY }} \
+            GatewayAppRepository=${{ env.ECR_REPOSITORY_GATEWAY }} \
           --capabilities CAPABILITY_NAMED_IAM
 
     - name: Clean up workspace

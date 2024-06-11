@@ -1,3 +1,15 @@
+Parameters:
+  DatabaseManagementServiceRepository:
+    Type: String
+  UserServiceRepository:
+    Type: String
+  PaymentServiceRepository:
+    Type: String
+  DeliveryServiceRepository:
+    Type: String
+  GatewayAppRepository:
+    Type: String
+
 Resources:
   ParcelAppCluster:
     Type: AWS::ECS::Cluster
@@ -28,7 +40,7 @@ Resources:
         - FARGATE
       ContainerDefinitions:
         - Name: dbms-container
-          Image: <ECR_REPOSITORY_URI>/database_management_service_project:latest
+          Image: !Ref DatabaseManagementServiceRepository
           PortMappings:
             - ContainerPort: 8080
             
@@ -56,7 +68,7 @@ Resources:
         - FARGATE
       ContainerDefinitions:
         - Name: user-container
-          Image: <ECR_REPOSITORY_URI>/user_service_project:latest
+          Image: !Ref UserServiceRepository
           PortMappings:
             - ContainerPort: 8081
   PaymentService:
@@ -83,7 +95,7 @@ Resources:
         - FARGATE
       ContainerDefinitions:
         - Name: payment-container
-          Image: <ECR_REPOSITORY_URI>/payment_service_project:latest
+          Image: !Ref PaymentServiceRepository
           PortMappings:
             - ContainerPort: 8082
          
@@ -111,7 +123,7 @@ Resources:
         - FARGATE
       ContainerDefinitions:
         - Name: delivery-container
-          Image: <ECR_REPOSITORY_URI>/delivery_service_project:latest
+          Image: !Ref DeliveryServiceRepository
           PortMappings:
             - ContainerPort: 8083
             
@@ -139,6 +151,6 @@ Resources:
         - FARGATE
       ContainerDefinitions:
         - Name: gateway-container
-          Image: <ECR_REPOSITORY_URI>/gateway_app_project:latest
+          Image: !Ref GatewayAppRepository
           PortMappings:
             - ContainerPort: 80
