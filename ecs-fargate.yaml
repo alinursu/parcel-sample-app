@@ -9,8 +9,100 @@ Parameters:
     Type: String
   GatewayAppRepository:
     Type: String
+  ECSServiceRole:
+    Type: String
+  VpcCidr:
+    Type: String
+    Default: "10.0.0.0/16"
 
 Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ParcelAppVPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.1.0/24"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ "0", !GetAZs ]
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.2.0/24"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ "1", !GetAZs ]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  ECSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound traffic to ECS tasks
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8081
+          ToPort: 8081
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8082
+          ToPort: 8082
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8083
+          ToPort: 8083
+          CidrIp: 0.0.0.0/0
+
   ParcelAppCluster:
     Type: AWS::ECS::Cluster
     Properties:
@@ -25,8 +117,11 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: ["subnet-12345678"]
-          SecurityGroups: ["sg-12345678"]
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups: 
+            - !Ref ECSecurityGroup
           AssignPublicIp: ENABLED
 
   DBMSTaskDefinition:
@@ -38,12 +133,19 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
         - Name: dbms-container
           Image: !Ref DatabaseManagementServiceRepository
           PortMappings:
             - ContainerPort: 8080
-            
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/dbms-container
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
   UserService:
     Type: AWS::ECS::Service
     Properties:
@@ -53,8 +155,11 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: ["subnet-12345678"]
-          SecurityGroups: ["sg-12345678"]
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups: 
+            - !Ref ECSecurityGroup
           AssignPublicIp: ENABLED
 
   UserTaskDefinition:
@@ -66,11 +171,19 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
         - Name: user-container
           Image: !Ref UserServiceRepository
           PortMappings:
             - ContainerPort: 8081
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/user-container
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
   PaymentService:
     Type: AWS::ECS::Service
     Properties:
@@ -80,8 +193,11 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: ["subnet-12345678"]
-          SecurityGroups: ["sg-12345678"]
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups: 
+            - !Ref ECSecurityGroup
           AssignPublicIp: ENABLED
 
   PaymentTaskDefinition:
@@ -93,12 +209,19 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
         - Name: payment-container
           Image: !Ref PaymentServiceRepository
           PortMappings:
             - ContainerPort: 8082
-         
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/payment-container
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
   DeliveryService:
     Type: AWS::ECS::Service
     Properties:
@@ -108,8 +231,11 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: ["subnet-12345678"]
-          SecurityGroups: ["sg-12345678"]
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups: 
+            - !Ref ECSecurityGroup
           AssignPublicIp: ENABLED
 
   DeliveryTaskDefinition:
@@ -121,12 +247,19 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
         - Name: delivery-container
           Image: !Ref DeliveryServiceRepository
           PortMappings:
             - ContainerPort: 8083
-            
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/delivery-container
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
   GatewayService:
     Type: AWS::ECS::Service
     Properties:
@@ -136,8 +269,11 @@ Resources:
       DesiredCount: 1
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: ["subnet-12345678"]
-          SecurityGroups: ["sg-12345678"]
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups: 
+            - !Ref ECSecurityGroup
           AssignPublicIp: ENABLED
 
   GatewayTaskDefinition:
@@ -149,8 +285,15 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+      ExecutionRoleArn: !Ref ECSServiceRole
       ContainerDefinitions:
         - Name: gateway-container
           Image: !Ref GatewayAppRepository
           PortMappings:
             - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/gateway-container
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs

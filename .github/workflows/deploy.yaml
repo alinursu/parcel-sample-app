@@ -17,6 +17,7 @@ jobs:
       ECR_REPOSITORY_PAYMENT: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/payment_service_project
       ECR_REPOSITORY_DELIVERY: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/delivery_service_project
       ECR_REPOSITORY_GATEWAY: ${{ secrets.AWS_ECR_REGISTRY_EU_CENTRAL_1 }}/gateway_app_project
+      AWS_SERVICE_ROLE: ${{ secrets.AWS_SERVICE_ROLE_ECS }}
 
     steps:
     - name: Checkout code
@@ -80,6 +81,7 @@ jobs:
             PaymentServiceRepository=${{ env.ECR_REPOSITORY_PAYMENT }} \
             DeliveryServiceRepository=${{ env.ECR_REPOSITORY_DELIVERY }} \
             GatewayAppRepository=${{ env.ECR_REPOSITORY_GATEWAY }} \
+            ECSServiceRole=${{ env.AWS_SERVICE_ROLE }} \
           --capabilities CAPABILITY_NAMED_IAM
 
     - name: Clean up workspace
