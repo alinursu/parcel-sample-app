@@ -82,6 +82,9 @@ jobs:
             DeliveryServiceRepository=${{ env.ECR_REPOSITORY_DELIVERY }} \
             GatewayAppRepository=${{ env.ECR_REPOSITORY_GATEWAY }} \
             ECSServiceRole=${{ env.AWS_SERVICE_ROLE }} \
+            PostgresqlDbName=${{ secrets.AWS_DATABASE_NAME }} \
+            PostgresqlDbUser=${{ secrets.AWS_DATABASE_USER }} \
+            PostgresqlDbPass=${{ secrets.AWS_DATABASE_PASSWORD }} \
           --capabilities CAPABILITY_NAMED_IAM
 
     - name: Clean up workspace

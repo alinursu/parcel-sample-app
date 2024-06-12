@@ -1,17 +1,14 @@
 # Server port
 server:
-  port: 80
+  port: 8080
 
 spring:
-  # Application name
-  application:
-    name: user-service-app
   # Spring data source definition
   datasource:
-    driverClassName: org.postgresql.Driver
-    url: "jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
-    username: "${DB_USER}"
-    password: "${DB_PASS}"
+    driverClassName: org.h2.Driver
+    url: "jdbc:h2:mem:testdb"
+    username: "sa"
+    password: "password"
     testOnBorrow: true
     testWhileIdle: true
     timeBetweenEvictionRunsMillis: 60000
@@ -22,11 +19,11 @@ spring:
     max-wait: 8000
   # Spring-Flyway configuration
   flyway:
-    locations: db/migration/postgresql
+    locations: db/migration/h2
 
 # Flyway configuration
 flyway:
-  url: "jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}"
+  url: "jdbc:h2:mem:testdb"
   schemas: USERSERVICE
-  user: "${DB_USER}"
-  password: "${DB_PASS}"
+  username: "sa"
+  password: "password"

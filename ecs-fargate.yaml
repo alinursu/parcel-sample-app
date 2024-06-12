@@ -11,26 +11,75 @@ Parameters:
     Type: String
   ECSServiceRole:
     Type: String
-  VpcCidr:
+  PostgresqlDbName:
     Type: String
-    Default: "10.0.0.0/16"
+  PostgresqlDbUser:
+    Type: String
+  PostgresqlDbPass:
+    Type: String
 
 Resources:
+  # Cluster
+  ParcelAppCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ParcelAppCluster
+
+  # Log Groups
+  DBMSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/dbms-container
+
+  UserLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/user-container
+
+  PaymentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/payment-container
+
+  DeliveryLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/delivery-container
+
+  GatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/gateway-container
+
+  # VPC, Subnets, Routing
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref VpcCidr
+      CidrBlock: 10.0.0.0/16
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
           Value: ParcelAppVPC
 
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: ParcelAppInternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.0.1.0/24"
+      CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ "0", !GetAZs ]
 
@@ -38,48 +87,94 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: "10.0.2.0/24"
+      CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [ "1", !GetAZs ]
 
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-
-  AttachGateway:
-    Type: AWS::EC2::VPCGatewayAttachment
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [ "0", !GetAZs ]
 
-  PublicRouteTable:
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [ "1", !GetAZs ]
+
+  RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: ParcelAppPublicRouteTable
 
-  PublicRoute:
+  Route:
     Type: AWS::EC2::Route
-    DependsOn: AttachGateway
+    DependsOn: VPCGatewayAttachment
     Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: "0.0.0.0/0"
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  PublicSubnet1RouteTableAssociation:
+  SubnetRouteTableAssociation1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref RouteTable
 
-  PublicSubnet2RouteTableAssociation:
+  SubnetRouteTableAssociation2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref RouteTable
 
-  ECSecurityGroup:
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: ParcelAppPrivateRouteTable
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for RDS DB"
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+
+  # Security Groups
+  SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound traffic to ECS tasks
+      GroupDescription: Allow HTTP and HTTPS traffic
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -87,43 +182,52 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
+          FromPort: 443
+          ToPort: 443
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8081
-          ToPort: 8081
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8082
-          ToPort: 8082
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 8083
-          ToPort: 8083
+      SecurityGroupEgress:
+        - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
-  ParcelAppCluster:
-    Type: AWS::ECS::Cluster
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      ClusterName: ParcelAppCluster
+      GroupDescription: "Security group for RDS DB"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0  # Adjust as necessary for your security requirements
 
-  DBMSService:
-    Type: AWS::ECS::Service
+  # NAT Gateway
+  NATGatewayEIP:
+    Type: AWS::EC2::EIP
+
+  NATGateway:
+    Type: AWS::EC2::NatGateway
     Properties:
-      Cluster: !Ref ParcelAppCluster
-      TaskDefinition: !Ref DBMSTaskDefinition
-      LaunchType: FARGATE
-      DesiredCount: 1
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets: 
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups: 
-            - !Ref ECSecurityGroup
-          AssignPublicIp: ENABLED
+      AllocationId: !GetAtt NATGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
 
+  # PostgreSQL database
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: 14.12  # Downgrade to PostgreSQL version 14
+      MasterUsername: !Ref PostgresqlDbUser
+      MasterUserPassword: !Ref PostgresqlDbPass
+      DBName: !Ref PostgresqlDbName
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      AllocatedStorage: 20
+      StorageType: gp2
+      PubliclyAccessible: false
+
+  # Database Management Service
   DBMSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -138,30 +242,87 @@ Resources:
         - Name: dbms-container
           Image: !Ref DatabaseManagementServiceRepository
           PortMappings:
-            - ContainerPort: 8080
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: /ecs/dbms-container
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          Environment:
+            - Name: DB_HOST
+              Value: !GetAtt DBInstance.Endpoint.Address
+            - Name: DB_PORT
+              Value: "5432"
+            - Name: DB_NAME
+              Value: !Ref PostgresqlDbName
+            - Name: DB_USER
+              Value: !Ref PostgresqlDbUser
+            - Name: DB_PASS
+              Value: !Ref PostgresqlDbPass
 
-  UserService:
+  DBMSServiceLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: dbms-service-lb
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Type: application
+
+  DBMSServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  DBMSServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DBMSServiceTargetGroup
+      LoadBalancerArn: !Ref DBMSServiceLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  DBMSService:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ParcelAppCluster
-      TaskDefinition: !Ref UserTaskDefinition
+      TaskDefinition: !Ref DBMSTaskDefinition
       LaunchType: FARGATE
       DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: dbms-container
+          ContainerPort: 80
+          TargetGroupArn: !Ref DBMSServiceTargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: 
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups: 
-            - !Ref ECSecurityGroup
-          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref SecurityGroup
+          AssignPublicIp: DISABLED
 
+  # User Service
   UserTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -176,30 +337,79 @@ Resources:
         - Name: user-container
           Image: !Ref UserServiceRepository
           PortMappings:
-            - ContainerPort: 8081
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: /ecs/user-container
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          Environment:
+            - Name: DBM_SERVICE_BASE_URL
+              Value: !Sub "http://${DBMSServiceLoadBalancer.DNSName}:80"
 
-  PaymentService:
+  UserServiceLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: user-service-lb
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Type: application
+
+  UserServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  UserServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref UserServiceTargetGroup
+      LoadBalancerArn: !Ref UserServiceLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  UserService:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ParcelAppCluster
-      TaskDefinition: !Ref PaymentTaskDefinition
+      TaskDefinition: !Ref UserTaskDefinition
       LaunchType: FARGATE
       DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: user-container
+          ContainerPort: 80
+          TargetGroupArn: !Ref UserServiceTargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: 
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups: 
-            - !Ref ECSecurityGroup
-          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref SecurityGroup
+          AssignPublicIp: DISABLED
 
+  # Payment Service
   PaymentTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -214,30 +424,81 @@ Resources:
         - Name: payment-container
           Image: !Ref PaymentServiceRepository
           PortMappings:
-            - ContainerPort: 8082
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: /ecs/payment-container
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          Environment:
+            - Name: USER_SERVICE_BASE_URL
+              Value: !Sub "http://${UserServiceLoadBalancer.DNSName}:80"
+            - Name: DBM_SERVICE_BASE_URL
+              Value: !Sub "http://${DBMSServiceLoadBalancer.DNSName}:80"
 
-  DeliveryService:
+  PaymentServiceLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: payment-service-lb
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Type: application
+
+  PaymentServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  PaymentServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref PaymentServiceTargetGroup
+      LoadBalancerArn: !Ref PaymentServiceLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  PaymentService:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ParcelAppCluster
-      TaskDefinition: !Ref DeliveryTaskDefinition
+      TaskDefinition: !Ref PaymentTaskDefinition
       LaunchType: FARGATE
       DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: payment-container
+          ContainerPort: 80
+          TargetGroupArn: !Ref PaymentServiceTargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: 
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups: 
-            - !Ref ECSecurityGroup
-          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref SecurityGroup
+          AssignPublicIp: DISABLED
 
+  # Delivery Service
   DeliveryTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -252,30 +513,81 @@ Resources:
         - Name: delivery-container
           Image: !Ref DeliveryServiceRepository
           PortMappings:
-            - ContainerPort: 8083
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: /ecs/delivery-container
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          Environment:
+            - Name: USER_SERVICE_BASE_URL
+              Value: !Sub "http://${UserServiceLoadBalancer.DNSName}:80"
+            - Name: DBM_SERVICE_BASE_URL
+              Value: !Sub "http://${DBMSServiceLoadBalancer.DNSName}:80"
 
-  GatewayService:
+  DeliveryServiceLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: delivery-service-lb
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref SecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Type: application
+
+  DeliveryServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  DeliveryServiceListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DeliveryServiceTargetGroup
+      LoadBalancerArn: !Ref DeliveryServiceLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  DeliveryService:
     Type: AWS::ECS::Service
     Properties:
       Cluster: !Ref ParcelAppCluster
-      TaskDefinition: !Ref GatewayTaskDefinition
+      TaskDefinition: !Ref DeliveryTaskDefinition
       LaunchType: FARGATE
       DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: delivery-container
+          ContainerPort: 80
+          TargetGroupArn: !Ref DeliveryServiceTargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
-          Subnets: 
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups: 
-            - !Ref ECSecurityGroup
-          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          SecurityGroups:
+            - !Ref SecurityGroup
+          AssignPublicIp: DISABLED
 
+  # Gateway App
   GatewayTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -297,3 +609,40 @@ Resources:
               awslogs-group: /ecs/gateway-container
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+          Environment:
+            - Name: USER_SERVICE_BASE_URL
+              Value: !Sub "http://${UserServiceLoadBalancer.DNSName}:80"
+            - Name: PAYMENT_SERVICE_BASE_URL
+              Value: !Sub "http://${PaymentServiceLoadBalancer.DNSName}:80"
+            - Name: DELIVERY_SERVICE_BASE_URL
+              Value: !Sub "http://${DeliveryServiceLoadBalancer.DNSName}:80"
+
+  GatewayService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ParcelAppCluster
+      TaskDefinition: !Ref GatewayTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups:
+            - !Ref SecurityGroup
+          AssignPublicIp: ENABLED
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: ParcelAppVPC
+  PublicSubnets:
+    Value: !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+    Export:
+      Name: PublicSubnets
+  SecurityGroups:
+    Value: !Ref SecurityGroup
+    Export:
+      Name: ParcelAppSecurityGroup
